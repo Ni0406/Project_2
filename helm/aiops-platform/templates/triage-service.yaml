@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triage-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: triage-service
+spec:
+  replicas: {{ .Values.triage.replicaCount }}
+  selector:
+    matchLabels:
+      app: triage-service
+  template:
+    metadata:
+      labels:
+        app: triage-service
+    spec:
+      containers:
+      - name: triage
+        image: "{{ .Values.triage.image.repository }}:{{ .Values.triage.image.tag }}"
+        imagePullPolicy: {{ .Values.triage.image.pullPolicy }}
+        env:
+        - name: PYTHONUNBUFFERED
+          value: {{ .Values.global.pythonUnbuffered | quote }}
+        - name: DB_HOST
+          value: {{ .Values.infrastructure.database.host | quote }}
+        - name: DB_NAME
+          value: {{ .Values.infrastructure.database.name | quote }}
+        - name: DB_USER
+          value: {{ .Values.infrastructure.database.user | quote }}
+        - name: DB_PASS
+          value: {{ .Values.infrastructure.database.password | quote }}
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: {{ .Values.infrastructure.kafka.bootstrapServers | quote }}
+        resources:
+          {{- toYaml .Values.triage.resources | nindent 10 }}

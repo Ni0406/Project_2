@@ -1,0 +1,74 @@
+global:
+  namespace: ai-agents
+  pythonUnbuffered: "1"
+
+# Настройки подключения к инфраструктуре данных (data-platform)
+infrastructure:
+  kafka:
+    bootstrapServers: "my-cluster-kafka-bootstrap.data-platform.svc.cluster.local:9092"
+    topics:
+      raw: "incidents-raw"
+      critical: "incidents-critical"
+  valkey:
+    host: "valkey-redis.data-platform.svc.cluster.local"
+    port: 6379
+  database:
+    host: "postgres.data-platform.svc.cluster.local"
+    name: "incidents_db"
+    user: "postgres"
+    password: "postgres"
+  ollama:
+    # IP твоего хоста Mac (192.168.0.194)
+    baseUrl: "http://192.168.0.194:11434"
+    model: "qwen2.5:1.5b"
+
+# Микросервис 1: Ingestion API Gateway
+ingestion:
+  replicaCount: 1
+  image:
+    repository: aiops/ingestion-service
+    tag: v1
+    pullPolicy: Never
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Микросервис 2: Triage Agent (System-1)
+triage:
+  replicaCount: 1
+  image:
+    repository: aiops/triage-service
+    tag: v1
+    pullPolicy: Never
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Микросервис 3: Analyzer Agent (System-2 / LangGraph)
+analyzer:
+  replicaCount: 1
+  image:
+    repository: aiops/analyzer-service
+    tag: v1
+    pullPolicy: Never
+  service:
+    type: ClusterIP
+    port: 8001
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

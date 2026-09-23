@@ -1,0 +1,8 @@
+apiVersion: v2
+name: aiops-platform
+description: Helm chart for Autonomous SRE Multi-Agent Microservices Platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: student
