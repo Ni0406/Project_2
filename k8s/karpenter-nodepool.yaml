@@ -1,0 +1,39 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default-nodepool
+spec:
+  template:
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["arm64", "amd64"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand", "spot"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default-nodeclass
+  limits:
+    cpu: 100
+    memory: 100Gi
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default-nodeclass
+spec:
+  amiFamily: AL2023
+  role: "KarpenterNodeRole"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "minikube-cluster"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "minikube-cluster"
+        

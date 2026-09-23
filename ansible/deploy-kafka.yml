@@ -1,0 +1,7 @@
+---
+- name: Deploy Kafka Infrastructure on Kubernetes
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - role: kafka_strimzi

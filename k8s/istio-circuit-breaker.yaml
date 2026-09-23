@@ -1,0 +1,36 @@
+# 1. Retry-политика (Повторные попытки при временных сетевых сбоях)
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: analyzer-retry-policy
+  namespace: ai-agents
+spec:
+  hosts:
+    - analyzer-service
+  http:
+    - route:
+        - destination:
+            host: analyzer-service
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: "5xx,connect-failure,refused-stream"
+---
+# 2. Circuit Breaker (Outlier Detection)
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: analyzer-circuit-breaker
+  namespace: ai-agents
+spec:
+  host: analyzer-service
+  trafficPolicy:
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      consecutive5xxErrors: 2        # Если сервис выдал 2 ошибки 5xx подряд
+      interval: 10s                  # В окне 10 секунд
+      baseEjectionTime: 30s          # Выбросить его из балансировки на 30 секунд
+      maxEjectionPercent: 100        # Разрешить выбросить до 100% инстансов

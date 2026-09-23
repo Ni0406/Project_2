@@ -1,0 +1,39 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: aiops-gateway
+  namespace: ai-agents
+spec:
+  selector:
+    istio: ingressgateway # Используем стандартный Ingress Gateway Istio
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ingestion-gateway-route
+  namespace: ai-agents
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - aiops-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/v1/incidents
+    - uri:
+        prefix: /healthz
+    - uri:
+        prefix: /metrics
+    route:
+    - destination:
+        host: ingestion-service
+        port:
+          number: 8000

@@ -1,0 +1,55 @@
+name: AIOps Platform CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Шаг 1: Сборка образов микросервисов (Задание 5.2 - Build)
+    - name: Build Ingestion Service Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/ingestion-service
+        push: false
+        tags: aiops/ingestion-service:${{ github.sha }}
+
+    - name: Build Triage Service Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/triage-service
+        push: false
+        tags: aiops/triage-service:${{ github.sha }}
+
+    - name: Build Analyzer Service Image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/analyzer-service
+        push: false
+        tags: aiops/analyzer-service:${{ github.sha }}
+
+    # Шаг 2: Валидация Helm-чарта (Задание 5.2 - Update Helm)
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: v3.14.0
+
+    - name: Lint and Test Helm Chart
+      run: |
+        helm lint helm/aiops-platform
+        helm template aiops helm/aiops-platform --set ingestion.image.tag=${{ github.sha }}
+
+    # Шаг 3: ArgoCD GitOps Sync (Задание 5.2 - ArgoCD Sync)
+    - name: GitOps Sync Confirmation
+      run: |
+        echo "Helm chart validated. New commit sha ${{ github.sha }} pushed to Git repository."
+        echo "ArgoCD Reconciliation Loop will automatically sync the live cluster with the repository."
