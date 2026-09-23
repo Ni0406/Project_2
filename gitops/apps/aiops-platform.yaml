@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aiops-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Ni0406/Project_2.git'
+    targetRevision: HEAD
+    path: helm/aiops-platform
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: ai-agents
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
